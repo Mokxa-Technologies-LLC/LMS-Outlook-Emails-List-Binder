@@ -1,0 +1,52 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1780556285837
+Build-Jdk-Spec: 17
+Bundle-Activator: org.joget.mokxa.Activator
+Bundle-ClassPath: .,dependency/httpclient-4.5.13.jar,dependency/httpcore
+ -4.4.13.jar,dependency/commons-logging-1.2.jar,dependency/commons-codec
+ -1.11.jar,dependency/fluent-hc-4.5.13.jar,dependency/jackson-databind-2
+ .12.3.jar,dependency/jackson-annotations-2.12.3.jar,dependency/jackson-
+ core-2.12.3.jar,dependency/commons-lang3-3.11.jar,dependency/commons-io
+ -2.11.0.jar
+Bundle-ManifestVersion: 2
+Bundle-Name: outlook-email-list-binder
+Bundle-SymbolicName: org.joget.mokxa.outlook-email-list-binder
+Bundle-Version: 9.0.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin 5.1.9
+DynamicImport-Package: *
+Embed-Dependency: *;scope=compile|runtime;inline=false
+Embed-Directory: dependency
+Embed-StripGroup: true
+Embed-Transitive: true
+Embedded-Artifacts: dependency/httpclient-4.5.13.jar;g="org.apache.httpc
+ omponents";a="httpclient";v="4.5.13",dependency/httpcore-4.4.13.jar;g="
+ org.apache.httpcomponents";a="httpcore";v="4.4.13",dependency/commons-l
+ ogging-1.2.jar;g="commons-logging";a="commons-logging";v="1.2",dependen
+ cy/commons-codec-1.11.jar;g="commons-codec";a="commons-codec";v="1.11",
+ dependency/fluent-hc-4.5.13.jar;g="org.apache.httpcomponents";a="fluent
+ -hc";v="4.5.13",dependency/jackson-databind-2.12.3.jar;g="com.fasterxml
+ .jackson.core";a="jackson-databind";v="2.12.3",dependency/jackson-annot
+ ations-2.12.3.jar;g="com.fasterxml.jackson.core";a="jackson-annotations
+ ";v="2.12.3",dependency/jackson-core-2.12.3.jar;g="com.fasterxml.jackso
+ n.core";a="jackson-core";v="2.12.3",dependency/commons-lang3-3.11.jar;g
+ ="org.apache.commons";a="commons-lang3";v="3.11",dependency/commons-io-
+ 2.11.0.jar;g="commons-io";a="commons-io";v="2.11.0"
+Import-Package: org.joget.report.dao,org.joget.report.model,org.joget.re
+ port.service,org.joget.commons.util,org.joget.plugin.base,org.joget.plu
+ gin.property.model,org.joget.plugin.property.service,org.joget.director
+ y.model,org.joget.directory.model.service,org.joget.directory.dao,org.j
+ oget.workflow.model,org.joget.workflow.model.dao,org.joget.workflow.mod
+ el.service,org.joget.workflow.util,org.joget.apps.app.dao,org.joget.app
+ s.app.lib,org.joget.apps.app.model,org.joget.apps.app.service,org.joget
+ .apps.datalist.lib,org.joget.apps.datalist.model,org.joget.apps.datalis
+ t.service,org.joget.apps.form.lib,org.joget.apps.form.dao,org.joget.app
+ s.form.model,org.joget.apps.form.service,org.joget.apps.list.service,or
+ g.joget.apps.userview.lib,org.joget.apps.userview.model,org.joget.apps.
+ userview.service,org.joget.apps.workflow.lib,org.osgi.framework;version
+ ="1.3.0"
+Joget-Description: Lists Sent/Inbox emails for a user.Supports server-si
+ de date filters (start_filter / end_filter).Subject filtering is applie
+ d client-side.
+Joget-Name: Outlook Email List Binder
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+Tool: Bnd-6.3.1.202206071316

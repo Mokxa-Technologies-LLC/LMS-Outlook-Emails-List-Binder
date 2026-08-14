@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Microsoft Graph App Authentication",
+    "properties": [
+      {
+        "name": "clientId",
+        "label": "Client ID",
+        "type": "textfield",
+        "required": "true"
+      },
+      {
+        "name": "clientSecret",
+        "label": "Client Secret",
+        "type": "textfield",
+        "required": "true"
+      },
+      {
+        "name": "tenantId",
+        "label": "Tenant ID",
+        "type": "textfield",
+        "required": "true"
+      }
+    ]
+  },
+  {
+    "title": "Mailbox Configuration",
+    "properties": [
+      {
+        "name": "principalUserEmail",
+        "label": "User Email (UPN)",
+        "description": "Mailbox to read inbox from (e.g., user@contoso.com). Required.",
+        "type": "textfield",
+        "required": "true"
+      },{
+        "name": "extendedPropertyGuid",
+        "label": "Extended Property GUID",
+        "type": "textfield",
+        "value": "8F6C2F2A-4D4E-4C7C-A0E2-1F6E6C2A9C11",
+        "required": "true"
+      },
+      {
+        "name": "extendedPropertyName",
+        "label": "Extended Property Name",
+        "type": "textfield",
+        "value": "matterId",
+        "required": "true"
+      }
+    ]
+  }
+]
