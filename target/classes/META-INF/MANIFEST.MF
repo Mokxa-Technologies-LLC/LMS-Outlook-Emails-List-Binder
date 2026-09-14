@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1780556285837
+Bnd-LastModified: 1789382279641
 Build-Jdk-Spec: 17
 Bundle-Activator: org.joget.mokxa.Activator
 Bundle-ClassPath: .,dependency/httpclient-4.5.13.jar,dependency/httpcore

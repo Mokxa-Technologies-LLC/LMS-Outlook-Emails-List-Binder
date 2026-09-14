@@ -135,50 +135,25 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
             // Build main query (Sent Items folder, extended property, optional dates)
             // Subject is NOT sent to Graph
             String url = buildPrimaryUrl(principalUser, extPropId, matterIdValue,
-                    dateFrom, dateTo, pageSize, skip);
+                    dateFrom, dateTo,subject, pageSize, skip);
 //            LogUtil.info(TAG, "[getData] URL: " + url);
 
             JsonNode messages = fetchJsonArray(url, token);
             if (messages == null) return result;
+            FormRowSet rowSet = new FormRowSet();
 
-            // Client‑side subject filtering
-            if (StringUtils.isNotBlank(subject)) {
+            for (JsonNode msg : messages) {
+                String convId = text(msg, "conversationId");
+                int unread = 0;
 
-//                LogUtil.info(getClass().getName(),"Input subject: "+subject);
-                List<JsonNode> filtered = new ArrayList<>();
-                String term = subject.toLowerCase().replace("%", "").trim();
-                for (JsonNode msg : messages) {
-                    String subj = text(msg, "subject");
-//                    LogUtil.info(getClass().getName(),"Fetched subject: "+subj);
-                    if (subj != null && subj.toLowerCase().contains(term)) {
-                        filtered.add(msg);
-                    }
+                if (StringUtils.isNotBlank(convId)) {
+                    unread = fetchUnreadCount(principalUser, convId, token);
                 }
-                // Replace the messages array with the filtered list
-                // (We need to rebuild the array from filtered list; we'll just iterate it directly)
-                messages = null; // We'll iterate filtered directly later
-                FormRowSet rowSet = new FormRowSet();
-                for (JsonNode msg : filtered) {
-                    String convId = text(msg, "conversationId");
-                    int unread = 0;
-                    if (StringUtils.isNotBlank(convId)) {
-                        unread = fetchUnreadCount(principalUser, convId, token);
-                    }
-                    rowSet.add(toFormRow(msg, unread));
-                }
-                result.addAll(rowSet);
-            } else {
-                FormRowSet rowSet = new FormRowSet();
-                for (JsonNode msg : messages) {
-                    String convId = text(msg, "conversationId");
-                    int unread = 0;
-                    if (StringUtils.isNotBlank(convId)) {
-                        unread = fetchUnreadCount(principalUser, convId, token);
-                    }
-                    rowSet.add(toFormRow(msg, unread));
-                }
-                result.addAll(rowSet);
+
+                rowSet.add(toFormRow(msg, unread));
             }
+
+            result.addAll(rowSet);
 
         } catch (Exception e) {
             LogUtil.error(TAG, e, "[getData] Error");
@@ -204,6 +179,8 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
             // Extract date filters only (subject ignored)
             String dateFrom = null;
             String dateTo   = null;
+            String subject  = null;
+
             if (filters != null) {
                 for (DataListFilterQueryObject f : filters) {
                     String q = (f.getQuery() != null) ? f.getQuery().toLowerCase() : "";
@@ -212,16 +189,18 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
                     String v0 = vals[0];
                     if (StringUtils.isBlank(v0)) continue;
 
-                    if (q.contains("start_filter") || q.contains("start")) {
+                    if (q.contains("subject")) {
+                        subject = v0;
+                    } else if (q.contains("start_filter") || q.contains("start")) {
                         dateFrom = toUtcIso(v0, false);
                     } else if (q.contains("end_filter") || q.contains("end")) {
-                        dateTo   = toUtcIso(v0, true);
+                        dateTo = toUtcIso(v0, true);
                     }
                 }
             }
 
             String url = buildCountUrl(principalUser, extPropId, matterIdValue,
-                    dateFrom, dateTo);
+                    dateFrom, dateTo,subject);
 //            LogUtil.info(TAG, "[getCount] URL: " + url);
 
             String raw = executeGet(url, token);
@@ -242,6 +221,7 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
     private String buildPrimaryUrl(String user, String extPropId,
                                    String matterIdValue,
                                    String dateFrom, String dateTo,
+                                   String subject,
                                    int top, int skip) throws Exception {
 
         String escapedPropId = extPropId.replace("'", "''");
@@ -258,6 +238,21 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
         }
         if (StringUtils.isNotBlank(dateTo)) {
             filter.append(" and sentDateTime le ").append(dateTo);
+        }
+
+
+
+        if (StringUtils.isNotBlank(subject)) {
+            String safeSubject = subject.replace("%", "").trim().replace("'", "''");
+            if (StringUtils.isNotBlank(safeSubject)) {
+                if (StringUtils.isBlank(dateFrom)
+                        && StringUtils.isBlank(dateTo)) {
+                    filter.append(" and sentDateTime ge 1900-01-01T00:00:00Z ");
+                }
+                filter.append(" and contains(subject,'")
+                        .append(safeSubject)
+                        .append("')");
+            }
         }
 
         List<String> params = new ArrayList<>();
@@ -281,7 +276,7 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
 
     private String buildCountUrl(String user, String extPropId,
                                  String matterIdValue,
-                                 String dateFrom, String dateTo) throws Exception {
+                                 String dateFrom, String dateTo, String subject) throws Exception {
 
         String escapedPropId = extPropId.replace("'", "''");
         String escapedMatter = matterIdValue.replace("'", "''");
@@ -298,6 +293,17 @@ public class OutlookEmailListBinder extends DataListBinderDefault {
         if (StringUtils.isNotBlank(dateTo)) {
             filter.append(" and sentDateTime le ").append(dateTo);
         }
+
+        if (StringUtils.isNotBlank(subject)) {
+            String safeSubject = subject.replace("%", "").trim().replace("'", "''");
+            if (StringUtils.isNotBlank(safeSubject)) {
+                filter.append(" and contains(subject,'")
+                        .append(safeSubject)
+                        .append("')");
+            }
+        }
+
+
 
         List<String> params = new ArrayList<>();
         params.add("$filter=" + enc(filter.toString()));

@@ -123,32 +123,15 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
                 }
             }
 
-            String url = buildInboxUrl(principalUser, dateFrom, dateTo, pageSize, skip);
+            String url = buildInboxUrl(principalUser, dateFrom, dateTo, subject,pageSize, skip);
 //            LogUtil.info(TAG, "[getData] URL: " + url);
 
             JsonNode messages = fetchJsonArray(url, token);
             if (messages == null) return result;
 
-            // Client-side subject filter
-            List<JsonNode> msgList = new ArrayList<>();
-            for (JsonNode msg : messages) {
-                msgList.add(msg);
-            }
-
-            if (StringUtils.isNotBlank(subject)) {
-                String term = subject.toLowerCase().replace("%", "").trim();
-                List<JsonNode> filtered = new ArrayList<>();
-                for (JsonNode msg : msgList) {
-                    String subj = text(msg, "subject");
-                    if (subj != null && subj.toLowerCase().contains(term)) {
-                        filtered.add(msg);
-                    }
-                }
-                msgList = filtered;
-            }
 
             FormRowSet rowSet = new FormRowSet();
-            for (JsonNode msg : msgList) {
+            for (JsonNode msg : messages) {
                 String convId = text(msg, "conversationId");
                 int[]    unreadOut  = {0};
                 String[] extPropOut = {""};
@@ -184,6 +167,7 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
 
             String dateFrom = null;
             String dateTo   = null;
+            String subject  = null;
 
             if (filters != null) {
                 for (DataListFilterQueryObject f : filters) {
@@ -193,7 +177,9 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
                     String v0 = vals[0];
                     if (StringUtils.isBlank(v0)) continue;
 
-                    if (q.contains("start_filter")) {
+                    if (q.contains("subject")) {
+                        subject = v0;
+                    } else if (q.contains("start_filter")) {
                         dateFrom = toUtcIso(v0, false);
                     } else if (q.contains("end_filter")) {
                         dateTo   = toUtcIso(v0, true);
@@ -201,7 +187,7 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
                 }
             }
 
-            String url = buildCountUrl(principalUser, dateFrom, dateTo);
+            String url = buildCountUrl(principalUser, dateFrom, dateTo,subject);
 //            LogUtil.info(TAG, "[getCount] URL: " + url);
 
             String raw  = executeGet(url, token);
@@ -219,7 +205,7 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
 
     // URL builders
     private String buildInboxUrl(String user, String dateFrom, String dateTo,
-                                 int top, int skip) throws Exception {
+                                 String subject,int top, int skip) throws Exception {
 
         StringBuilder filter = new StringBuilder();
 
@@ -229,6 +215,21 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
         if (StringUtils.isNotBlank(dateTo)) {
             if (filter.length() > 0) filter.append(" and ");
             filter.append("receivedDateTime le ").append(dateTo);
+        }
+
+        if (StringUtils.isNotBlank(subject)) {
+            String safeSubject = subject.replace("%", "").trim().replace("'", "''");
+            if (StringUtils.isNotBlank(safeSubject)) {
+                // Subject-only search:
+                // Graph requires receivedDateTime in $filter because
+                // $orderby uses receivedDateTime.
+                if (filter.length() == 0) {
+                    filter.append("receivedDateTime ge 1900-01-01T00:00:00Z");
+                }
+                filter.append(" and contains(subject,'")
+                        .append(safeSubject)
+                        .append("')");
+            }
         }
 
         List<String> params = new ArrayList<>();
@@ -249,7 +250,7 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
     }
 
     private String buildCountUrl(String user, String dateFrom,
-                                 String dateTo) throws Exception {
+                                 String dateTo, String subject) throws Exception {
 
         StringBuilder filter = new StringBuilder();
 
@@ -259,6 +260,18 @@ public class OutlookInboxListBinder extends DataListBinderDefault {
         if (StringUtils.isNotBlank(dateTo)) {
             if (filter.length() > 0) filter.append(" and ");
             filter.append("receivedDateTime le ").append(dateTo);
+        }
+
+        if (StringUtils.isNotBlank(subject)) {
+            String safeSubject = subject.replace("%", "").trim().replace("'", "''");
+
+            if (StringUtils.isNotBlank(safeSubject)) {
+                if (filter.length() > 0) filter.append(" and ");
+
+                filter.append("contains(subject,'")
+                        .append(safeSubject)
+                        .append("')");
+            }
         }
 
         List<String> params = new ArrayList<>();
